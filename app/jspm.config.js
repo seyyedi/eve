@@ -25,6 +25,7 @@ System.config({
     "core-js": "npm:core-js@1.2.1",
     "react": "npm:react@0.14.0",
     "react-dom": "npm:react-dom@0.14.0",
+    "socket.io-client": "github:socketio/socket.io-client@1.3.7",
     "github:jspm/nodelibs-assert@0.1.0": {
       "assert": "npm:assert@1.3.0"
     },
