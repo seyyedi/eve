@@ -1,21 +1,20 @@
-import fs from 'fs';
 import path from 'path';
+import fs from 'fs';
 import http2 from 'http2';
 import https from 'https';
 import minimist from 'minimist';
-import mime from 'mime-types';
+import express from 'express';
 
 import log from './../log';
+import WebServer from './webServer';
 import RealtimeServer from './realtimeServer';
 
 export default class Server {
     constructor() {
-        this.routes = {};
         this.args = minimist(process.argv.slice(2));
-        this.runHttp = this.runHttp.bind(this);
     }
 
-    run(port, realtimePort) {
+    listen(port, realtimePort) {
         port = port || parseInt(this.args.port, 10) || 3000;
         realtimePort = realtimePort || parseInt(this.args.realtimePort, 10) || 3001;
 
@@ -24,104 +23,58 @@ export default class Server {
             cert: fs.readFileSync(this.args.sslCert ||'D:\\Seyyedi\\Certificates\\localhost.crt')
         };
 
-        this.http = http2.createServer(httpsOptions, this.runHttp);
-        this.realtime = https.createServer(httpsOptions);
-        this.realtimeServer = new RealtimeServer(this.realtime);
+        // this.webServer = new WebServer()
+        //     .static('^/$', 'app/index.html')
+        //     .static('^/(.+)$', 'app');
+        //
+        // this.http2 = http2.createServer(httpsOptions, this.webServer.respond);
 
-        this.http.listen(port);
-        log.info('Running https server on *:' + port);
+        this.express = express();
 
-        this.realtime.listen(realtimePort);
-        log.info('Running https realtime server on *:' + realtimePort);
+        this.express.get('/', (req, res) =>
+            res.sendFile(path.resolve('app/index.html'))
+        );
+
+        this.express.use(
+            express.static('app')
+        );
+
+        this.https = https.createServer(httpsOptions, this.express);
+
+        this.httpsRealtime = https.createServer(httpsOptions);
+        this.realtimeServer = new RealtimeServer(this.httpsRealtime);
+
+        // this.http2.listen(port);
+        // log.info('Http2 server is online @*:' + port);
+
+        this.https.listen(port);
+        log.info('Https server is online @*:' + port);
+
+        this.httpsRealtime.listen(realtimePort);
+        log.info('Https realtime server is online @*:' + realtimePort);
     }
 
-    runHttp(req, res) {
-        for (var route of this.routes[req.method.toLowerCase()]) {
-            var match = req.url.match(route.url);
-
-            if (match !== null) {
-                try {
-                    route.handler(req, res, match);
-                } catch (e) {
-                    console.warn(e);
-                    res.writeHead(500);
-                    res.end();
-                }
-
-                return;
-            }
-        }
-
-        res.writeHead(404);
-        res.end();
-    }
-
-    registerRoute(method, url, handler) {
-        var routes = this.routes[method];
-
-        if (!routes) {
-            routes = this.routes[method] = [];
-        }
-
-        routes.push({
-            url: url,
-            handler: handler
-        });
-
-        return this;
-    }
-
-    static(url, basePath) {
-        basePath = path.resolve(basePath || '');
-
-        return this.get(url, (req, res, match) => {
-            let file = basePath;
-
-            if (match.length === 1) {
-                file = path.join(file, match[0]);
-            } else {
-                for (var i = 1; i < match.length; i++) {
-                    file = path.join(file, match[i]);
-                }
-            }
-
-            fs.access(file, fs.R_OK, err => {
-                if (err) {
-                    res.writeHead(404);
-                    res.end(err.toString());
-                    return;
-                }
-
-                var mimeType = mime.lookup(file);
-
-                if (mimeType) {
-                    res.setHeader('Content-Type', mimeType);
-                }
-
-                fs
-                    .createReadStream(file)
-                    .pipe(res);
+    close() {
+        if (this.http2) {
+            this.http2.close(() => {
+                log.info('Http2 server is offline')
             });
-        });
-    }
+        }
 
-    get(url, handler) {
-        return this.registerRoute('get', url, handler);
-    }
+        if (this.https) {
+            this.https.close(() => {
+                log.info('Https server is offline')
+            });
+        }
 
-    post(url, handler) {
-        return this.registerRoute('post', url, handler);
-    }
+        if (this.realtimeServer) {
+            this.realtimeServer.close();
+        }
 
-    put(url, handler) {
-        return this.registerRoute('put', url, handler);
-    }
-
-    delete(url, handler) {
-        return this.registerRoute('delete', url, handler);
-    }
-
-    patch(url, handler) {
-        return this.registerRoute('patch', url, handler);
+        if (this.httpsRealtime) {
+            this.httpsRealtime.close(() => {
+                log.info('Https realtime server is offline');
+            });
+        }
     }
 }

@@ -3,6 +3,7 @@ import util from 'gulp-util';
 import del from 'del';
 import concat from 'gulp-concat';
 import childProcess from 'child_process';
+import readline from 'readline';
 
 import log from './log';
 import Server from './server/server';
@@ -50,10 +51,18 @@ gulp.task('serve', gulp.series(
     done => {
         var server = new Server();
 
-        server
-            .static('^/$', 'app/index.html')
-            .static('^/(.+)$', 'app')
-            .run();
+        server.listen();
+
+        var rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        rl.question('', answer => {
+            rl.close();
+            server.close();
+            done();
+        });
     }
 ));
 

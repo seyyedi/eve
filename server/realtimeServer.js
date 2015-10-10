@@ -74,4 +74,10 @@ export default class RealtimeServer {
 		this.messages.push(msg);
 		this.io.emit('chat-message', msg);
 	}
+
+    close() {
+        for (var user of this.users) {
+            user.socket.conn.close();
+        }
+    }
 }
