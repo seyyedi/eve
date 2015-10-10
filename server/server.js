@@ -43,7 +43,7 @@ export default class Server {
                 try {
                     route.handler(req, res, match);
                 } catch (e) {
-                    log.info(e);
+                    console.warn(e);
                     res.writeHead(500);
                     res.end();
                 }

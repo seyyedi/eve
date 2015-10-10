@@ -1,4 +1,5 @@
 import gulp from 'gulp';
+import util from 'gulp-util';
 import del from 'del';
 import concat from 'gulp-concat';
 import childProcess from 'child_process';
@@ -70,3 +71,13 @@ gulp.task('production', gulp.series(
 gulp.task('default', gulp.series(
     'development'
 ));
+
+log.on('entry', entry => {
+    switch (entry.level) {
+        case 'info':
+            util.log(entry.msg);
+            break;
+        default:
+            break;
+    }
+});

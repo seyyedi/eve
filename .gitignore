@@ -3,3 +3,4 @@ jspm_packages
 app/jspm.js
 app/bundle.js
 app/bundle.js.map
+eve.db

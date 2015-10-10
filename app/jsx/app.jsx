@@ -12,7 +12,7 @@ export default class App extends React.Component {
     }
 
     componentDidMount() {
-        this.socket = io('//:3001', { transports: ['websocket'] });
+        this.socket = io('https://localhost:3001', { transports: ['websocket'] });
 
         this.socket.on('connect', () => {
             this.setState({
