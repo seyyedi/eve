@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import io from 'socket.io-client';
 
+import Test from './test';
+
 export default class App extends React.Component {
     constructor(props) {
         super(props);
@@ -38,6 +40,9 @@ export default class App extends React.Component {
             <div>
                 <div>Hi, this is eve</div>
                 <div>Realtime status: {this.state.realtime}</div>
+                <div>
+                    <Test />
+                </div>
             </div>
         );
     }
