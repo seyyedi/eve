@@ -32,14 +32,22 @@ var jspm = (cmd, done) => {
     });
 };
 
+gulp.task('clean-bundle-files', () =>
+    del(['app/bundle.js', 'app/bundle.js.map'])
+);
+
+gulp.task('unbundle', done =>
+    jspm('unbundle app/bundle.js', done)
+);
+
 gulp.task('clean-bundle', gulp.series(
-    () => del(['app/bundle.js', 'app/bundle.js.map']),
-    done => jspm('unbundle app/bundle.js', done)
+    'clean-bundle-files',
+    'unbundle'
 ));
 
-gulp.task('bundle', gulp.series(
-    done => jspm('bundle jsx/app app/bundle.js -i', done)
-));
+gulp.task('bundle', done =>
+    jspm('bundle jsx/app app/bundle.js -i', done)
+);
 
 gulp.task('release', gulp.series(
     'clean-bundle',
@@ -47,34 +55,32 @@ gulp.task('release', gulp.series(
     'build'
 ));
 
-gulp.task('serve', gulp.series(
-    done => {
-        var server = new Server();
+gulp.task('server', done => {
+    var server = new Server();
 
-        server.listen();
+    server.listen();
 
-        var rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
+    var rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
 
-        rl.question('', answer => {
-            rl.close();
-            server.close();
-            done();
-        });
-    }
-));
+    rl.question('', answer => {
+        rl.close();
+        server.close();
+        done();
+    });
+});
 
 gulp.task('development', gulp.series(
     'clean-bundle',
     'build',
-    'serve'
+    'server'
 ));
 
 gulp.task('production', gulp.series(
     'release',
-    'serve'
+    'server'
 ));
 
 gulp.task('default', gulp.series(
@@ -84,9 +90,9 @@ gulp.task('default', gulp.series(
 log.on('entry', entry => {
     switch (entry.level) {
         case 'info':
-            util.log(entry.msg);
-            break;
+        util.log(entry.msg);
+        break;
         default:
-            break;
+        break;
     }
 });
