@@ -90,9 +90,9 @@ gulp.task('default', gulp.series(
 log.on('entry', entry => {
     switch (entry.level) {
         case 'info':
-        util.log(entry.msg);
-        break;
+            util.log(entry.msg);
+            break;
         default:
-        break;
+            break;
     }
 });
